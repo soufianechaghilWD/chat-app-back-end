@@ -14,7 +14,8 @@ export const Register_User = async (req, res, next) => {
             posts: [],
             registedPosts: [],
             people_that_follow_the_user: [],
-            people_that_the_user_follow: []
+            people_that_the_user_follow: [],
+            profile_pic: req.protocol + '://' + req.get('host')+'/default_url_pic.png'
         })
         try{
             var existed_user = await User.findOne({'username': req.body.username})

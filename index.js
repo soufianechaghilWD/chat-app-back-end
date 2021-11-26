@@ -3,7 +3,9 @@ import cors from 'cors'
 import * as Config from './config/config.js'
 import mongoose from 'mongoose'
 import userRouter from './routes/user.js'
+import path from 'path'
 
+const __dirname = path.resolve()
 const app = express()
 
 // Connect to mongoose
@@ -17,6 +19,7 @@ mongoose.connection.on('disconnected', () => console.log("Database is Disconnect
 app.use(cors())
 app.use(express.json())
 app.use(userRouter)
+app.use(express.static(__dirname + '/public'));
 
 app.get('/', (req, res) => res.send('Hello guys it is me'))
 
