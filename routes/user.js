@@ -15,4 +15,12 @@ Router.post('/checkUser', UserController.verifyJWT, UserController.Check_User)
 // Log the user out
 Router.post('/logout', UserController.verifyJWT, UserController.Logout_User)
 
+// Follow a User
+// Router.post('/followuser', UserController.verifyJWT, UserController.followUser)
+Router.post('/followuser', UserController.followUser)
+
+// Unfollow a User
+// Router.post('/unfollowuser', UserController.verifyJWT, UserController.unfollowUser)
+Router.post('/unfollowuser', UserController.unfollowUser)
+
 export default Router

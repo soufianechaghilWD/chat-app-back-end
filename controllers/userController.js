@@ -5,7 +5,11 @@ import blacklist_JWT from '../models/blacklist_JWT.js'
 
 // Register a User 
 export const Register_User = async (req, res, next) => {
-    var crypted_password = await bcrypt.hash(req.body.password, 10)
+    try{
+        var crypted_password = await bcrypt.hash(req.body.password, 10)
+    }catch(e){
+        res.status(500).json(e)
+    }
     if(crypted_password){
         var new_user = new User({
             username: req.body.username,
@@ -13,8 +17,7 @@ export const Register_User = async (req, res, next) => {
             password: crypted_password,
             posts: [],
             registedPosts: [],
-            people_that_follow_the_user: [],
-            people_that_the_user_follow: [],
+            followers: [],
             profile_pic: req.protocol + '://' + req.get('host')+'/default_url_pic.png'
         })
         try{
@@ -40,7 +43,11 @@ export const Register_User = async (req, res, next) => {
 // Login a User
 export const Login_User = async (req, res, next) => {
     try{
-        var user = await User.findOne({'username': req.body.username})
+        try{
+            var user = await User.findOne({'username': req.body.username})
+        }catch(e){
+            res.status(500).json(e)
+        }
         if(user){
             if(bcrypt.compare(req.body.password, user.password)){
                 // Assign JWT and send back to user
@@ -57,7 +64,11 @@ export const Login_User = async (req, res, next) => {
 export const Check_User = async (req, res, next) => {
     var token = req.body.token
     try{
-        var found = await blacklist_JWT.findOne({'token': token})
+        try{
+            var found = await blacklist_JWT.findOne({'token': token})
+        }catch(e){
+            res.status(500).json(e)
+        }
         if(found) res.status(400).json({msg: 'You need to login again'})
         else res.status(200).json({msg: 'You are logged in'})
     }catch(e){
@@ -72,13 +83,73 @@ export const Logout_User = async (req, res, next) => {
         'token': token
     })
     try{
-        var added_blacklist_jwt = await new_Blacklist_jwt.save()
+        try{
+            var added_blacklist_jwt = await new_Blacklist_jwt.save()
+        }catch(e){
+            res.status(501).json(e)
+        }
         if(added_blacklist_jwt) res.status(200).json({msg: 'been logged out'})
         res.status(401).json({msg: 'Could not log out'})
     }catch(e) {
         res.status(500).json(e)
     }
 }
+
+// Follow a user
+export const followUser = async (req, res, next) => {
+    var to_follow = req.body.to_follow
+    var me = req.body.me
+
+    try{
+        var user_to_follow = await User.findOne({_id: to_follow})
+        var user_me = await User.findOne({_id: me})
+
+        if(user_to_follow && user_me){
+            var add_to_followers = await User.updateOne({_id: me}, {$push: {followers: to_follow}})
+            if(add_to_followers) {
+                try{
+                    var updated_user = await User.findOne({_id: me})
+                    res.status(200).json(updated_user)
+                }catch(e){
+                    res.status(500).json(e)
+                }
+            }else{
+                res.status(401).json({msg: "Could not follow the user"})
+            }
+        }else res.status(401).json({msg: "One of the users doesn't exist"})
+    }catch(e){
+        res.status(500).json(e)
+    }
+}
+
+// Unfollow a user
+export const unfollowUser = async (req, res, next) => {
+    var to_follow = req.body.to_follow
+    var me = req.body.me
+
+    try{
+        var user_to_follow = await User.findOne({_id: to_follow})
+        var user_me = await User.findOne({_id: me})
+
+        if(user_to_follow && user_me){
+            var remove_from_followers = await User.updateOne({_id: me}, {$pull: {followers: to_follow}})
+            if(remove_from_followers) {
+                try{
+                    var updated_user = await User.findOne({_id: me})
+                    res.status(200).json(updated_user)
+                }catch(e){
+                    res.status(500).json(e)
+                }
+            }else{
+                res.status(401).json({msg: "Could not unfollow the user"})
+            }
+        }else res.status(401).json({msg: "One of the users doesn't exist"})
+    }catch(e){
+        res.status(500).json(e)
+    }
+}
+
+// Update the user
 
 // Verify the Token
 export const verifyJWT = (req, res, next) => {
