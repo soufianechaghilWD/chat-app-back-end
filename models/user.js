@@ -6,6 +6,7 @@ const UserSchema = new schema({
     username: String,
     email: String,
     password: String,
+    bio: String,
     posts: [{type: schema.Types.ObjectId, ref: 'Post'}],
     registedPosts: [{type: schema.Types.ObjectId, ref: 'Post'}],
     followers: [{type: schema.Types.ObjectId, ref: "User"}],

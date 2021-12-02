@@ -2,6 +2,9 @@ import bcrypt from 'bcrypt'
 import User from '../models/user.js'
 import jwt, { decode } from 'jsonwebtoken'
 import blacklist_JWT from '../models/blacklist_JWT.js'
+import * as postController from './postController.js'
+import multer from 'multer'
+import Post from '../models/post.js'
 
 // Register a User 
 export const Register_User = async (req, res, next) => {
@@ -15,10 +18,11 @@ export const Register_User = async (req, res, next) => {
             username: req.body.username,
             email: req.body.email,
             password: crypted_password,
+            bio: req.body.bio,
             posts: [],
             registedPosts: [],
             followers: [],
-            profile_pic: req.protocol + '://' + req.get('host')+'/default_url_pic.png'
+            profile_pic: 'default_url_pic.png'
         })
         try{
             var existed_user = await User.findOne({'username': req.body.username})
@@ -150,6 +154,112 @@ export const unfollowUser = async (req, res, next) => {
 }
 
 // Update the user
+export const updateUser = async (req, res, next) => {
+    
+    var user_id = req.body.user_id
+    if(user_id){
+        try{
+            var user = await User.findOne({_id: user_id})
+            if(req.body.bio){
+                user.bio = req.body.bio
+                try{
+                    var new_user = await user.save()
+                    if(new_user) res.status(200).json(user)
+                    else res.status(401).json({msg: 'Could not update the user'})
+                }catch(e){ res.status(500).json(e) }
+            }else if (req.body.username){
+                try{
+                    var new_username = await User.findOne({username: req.body.username})
+                    if(new_username) res.status(401).json({msg: "User already exists"})
+                    else{
+                        user.username = req.body.username
+                        try{
+                            var new_user = await user.save()
+                            if(new_user) res.status(200).json(user)
+                            else res.status(401).json({msg: 'Could not update the user'})
+                        }catch(e) { res.status(500).json(e) }
+                    }
+                }catch(e){ res.status(500).json(e) }
+            }else if(req.body.password){
+                try{
+                    var newpass = await bcrypt.hash(req.body.password, 10)
+                    if(newpass){
+                        user.password = newpass
+                        try{    
+                            var new_user = await user.save()
+                            if(new_user) res.status(200).json(user)
+                            else res.status(401).json({msg: 'Could not update the user'}) 
+                        }catch(e) { res.status(500).json(e) }
+                    }else req.status(401).json({msg: "Could not get the hashed value"})
+                }catch(e) { res.status(500).json(e) }
+            }else res.status(401).json({msg: 'Do not what to update'})
+        }catch(e){ res.status(500).json(e) }    
+    }else res.status(401).json({msg: 'User not found'})
+}
+
+// Update the profile picture
+export const updateProfilePic = async (req, res, next) => {
+
+    postController.upload(req, res, async(err) => {
+        if(err instanceof multer.MulterError){
+            res.status(401).json({msg: 'A multer error has occured'})
+        }else if (err){
+            res.status(402).json(err)
+        }
+        try{
+            var user = await User.findOne({_id: req.body.user_id})
+            if(user){
+                if(user.profile_pic !== 'default_url_pic.png'){
+                    postController.delete_Pic(user.profile_pic)   
+                }
+                user.profile_pic = req.file.filename
+                try{
+                    var new_user = await user.save()
+                    if(new_user) res.status(200).json(user)
+                    else res.status(401).json({msg: 'Could not update the user'})
+                }catch(e){ res.status(500).json(e) }
+            }else res.status(401).json({msg: 'User not found'})
+        }catch(e){ res.status(500).json(e) }
+    })
+
+}
+
+// Add a post to registred posts
+export const registredPosts = async (req, res, next) => {
+    try{
+        var post = await Post.findOne({_id: req.body.post_id})
+        var user = await User.findOne({_id: req.body.user_id})
+        if(post && user){
+            user.registedPosts.push(req.body.post_id)
+            try{
+                var new_user = await user.save()
+                if(new_user) res.status(200).json(user)
+                else res.status(401).json({msg: 'Could not update the user'})
+            }catch(e) { res.status(500).json(e) }
+        }else res.status(401).json({msg: "Post or User does not exist"})
+    }catch(e) { res.status(500).json(e) }
+}
+
+// Remove a post from registred posts
+export const removeRegistredPost = async (req, res, next) => {
+    try{
+        var post = await Post.findOne({_id: req.body.post_id})
+        var user = await User.findOne({_id: req.body.user_id})
+        if(post && user){
+            try{
+                var new_user = await User.updateOne({_id: req.body.user_id}, {$pull: {registedPosts: req.body.post_id}})
+                if(new_user){
+                    try{
+                        var up_user = await User.findOne({_id: req.body.user_id})
+                        if(up_user) res.status(200).json(up_user)
+                        else res.status(401).json({msg: "Could not get the updated user"})
+                    }catch(e) { res.status(500).json(e) }
+                }else res.status(401).json({msg: "Could not add the post"})
+            }catch(e) { res.status(500).json(e) }
+        }else res.status(401).json({msg: "Post or User does not exist"})
+        
+    }catch(e) { res.status(500).json(e) }
+}
 
 // Verify the Token
 export const verifyJWT = (req, res, next) => {
