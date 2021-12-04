@@ -4,6 +4,7 @@ import User from '../models/user.js'
 import Comment from '../models/comment.js'
 import path from 'path'
 import fs from 'fs'
+import Notification from '../models/notification.js'
 
 const __dirname = path.resolve()
 // Add a picture to the server
@@ -45,7 +46,10 @@ export const addPost =  (req, res, next) => {
                 created: Date.now()
             })
             var saved = await new_post.save()
-            if(saved) res.status(200).json(saved)
+            if(saved) {
+                var user = await User.updateOne({_id: req.body.publisher}, {$push: {posts: saved._id}})
+                res.status(200).json(saved)
+            }
             else res.status(400).json({msg: 'Could not save the post'})
         }catch(e){
             res.status(501).json(e)
@@ -64,7 +68,18 @@ export const likePost = async (req, res, next) => {
         if(post && user){
             try{
                 var new_post = await Post.updateOne({_id: post_id}, {$push: {likers: user_id}})
-                if(new_post) {
+                if(post.publisher !== user._id){
+                    var new_noti = new Notification({
+                        like: {
+                            post: post._id,
+                            user: user._id
+                        },
+                        user: post.publisher
+                    })
+                    var saved_noti = await new_noti.save()
+                    var updated_publisher = await User.updateOne({_id: post.publisher}, {$push: {notifications: saved_noti._id}})
+                }
+                if(new_post && updated_publisher) {
                     try{
                         var new_post1 = await Post.findOne({_id: post_id})
                         if(new_post1) res.status(200).json(new_post1)
@@ -122,7 +137,11 @@ export const deletePost = async (req, res, next) => {
                     delete_Pic(post.picUrl)                    
                     try{
                         var deleted_post = await Post.deleteOne({_id: post_id})
-                        if(deleted_post) res.status(200).json(deleted_post)
+                        if(deleted_post) {
+                            var updated_user = await User.updateOne({_id: user_id}, {$pull: {posts: post_id}})
+                            if(updated_user)res.status(200).json(deleted_post)
+                            else res.status(401).json({msg: 'Could not delete the post from the user posts list'})
+                        }
                         else res.status(400).json({msg: "Could not delete the post"})
                     }catch(e){
                         res.status(501).json(e)
@@ -158,7 +177,18 @@ export const addComment = async (req, res, next) => {
                 if(added_comment){
                     try{
                         var new_post = await Post.updateOne({_id: post_id}, {$push: {comments: added_comment._id}})
-                        if(new_post){
+                        if(user_id !== post.publisher){
+                            var new_not = new Notification({
+                                comment: {
+                                    post: post._id,
+                                    user: user._id
+                                },
+                                user: post.publisher
+                            })
+                            var saved_not = await new_not.save()
+                            var updated_publisher = await User.updateOne({_id: post.publisher}, {$push: {notifications: saved_not._id}})
+                        }
+                        if(new_post && updated_publisher){
                             try{
                                 var new_post_v1 = await Post.findOne({_id: post_id})
                                 if(new_post_v1) res.status(200).json(new_post_v1)

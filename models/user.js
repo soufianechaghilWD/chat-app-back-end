@@ -10,7 +10,8 @@ const UserSchema = new schema({
     posts: [{type: schema.Types.ObjectId, ref: 'Post'}],
     registedPosts: [{type: schema.Types.ObjectId, ref: 'Post'}],
     followers: [{type: schema.Types.ObjectId, ref: "User"}],
-    profile_pic: String
+    profile_pic: {type: String, default: "default_url_pic.png"},
+    notifications: [{type: schema.Types.ObjectId, ref: 'Notification'}]
 })
 
 export default mongoose.model('User', UserSchema)

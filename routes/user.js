@@ -39,4 +39,20 @@ Router.put('/addtoregistredposts', UserController.registredPosts)
 // Router.put('/removefromregistredposts', UserController.verifyJWT, UserController.removeRegistredPost)
 Router.put('/removefromregistredposts', UserController.removeRegistredPost)
 
+// See a notification
+// Router.put('/seeNoti', UserController.verifyJWT, UserController.seeNotification)
+Router.put('/seeNoti', UserController.seeNotification)
+
+// See all the notifications
+// Router.put('/seeAllNoti', UserController.verifyJWT, UserController.seeAllNotifications)
+Router.put('/seeAllNoti', UserController.seeAllNotifications)
+
+// Delete all notifications
+// Router.delete('/deleteNotis', UserController.verifyJWT, UserController.deleteAllNotifications)
+Router.delete('/deleteNotis', UserController.deleteAllNotifications)
+
+// Get the feed
+// Router.post('/getTheFeed', UserController.verifyJWT, UserController.getTheFeed)
+Router.post('/getTheFeed', UserController.getTheFeed)
+
 export default Router

@@ -5,6 +5,7 @@ import blacklist_JWT from '../models/blacklist_JWT.js'
 import * as postController from './postController.js'
 import multer from 'multer'
 import Post from '../models/post.js'
+import Notification from '../models/notification.js'
 
 // Register a User 
 export const Register_User = async (req, res, next) => {
@@ -22,7 +23,7 @@ export const Register_User = async (req, res, next) => {
             posts: [],
             registedPosts: [],
             followers: [],
-            profile_pic: 'default_url_pic.png'
+            notifications: []
         })
         try{
             var existed_user = await User.findOne({'username': req.body.username})
@@ -110,7 +111,13 @@ export const followUser = async (req, res, next) => {
 
         if(user_to_follow && user_me){
             var add_to_followers = await User.updateOne({_id: me}, {$push: {followers: to_follow}})
-            if(add_to_followers) {
+            var noti = new Notification({
+                follow: me,
+                user: to_follow
+            })
+            var saved_noti = await noti.save()
+            var add_to_notification = await User.updateOne({_id: to_follow}, {$push: {notifications: saved_noti._id}})
+            if(add_to_followers && add_to_notification) {
                 try{
                     var updated_user = await User.findOne({_id: me})
                     res.status(200).json(updated_user)
@@ -258,6 +265,73 @@ export const removeRegistredPost = async (req, res, next) => {
             }catch(e) { res.status(500).json(e) }
         }else res.status(401).json({msg: "Post or User does not exist"})
         
+    }catch(e) { res.status(500).json(e) }
+}
+
+// See a notification
+export const seeNotification = async (req, res, next) => {
+    var noti_id = req.body.noti_id
+    var user_id = req.body.user_id
+
+    try{
+        var notification = await Notification.findOne({_id: noti_id})
+
+        if(notification){
+            if(String(JSON.stringify(notification.user)).replace(/\"/g, "") == user_id){
+                notification.seen = true
+                var updated_not = await notification.save()
+                var user = await User.findOne({_id: user_id})
+                if(user && updated_not) res.status(200).json(user)
+                else res.status(401).json({msg: 'Could not get the updated user'})
+            }else res.status(401).json({msg: "Can't see a not that not yours"})
+        }else res.status(401).json({msg: "User or Notification unfound"})
+
+    }catch(e) { res.status(500).json(e) }
+}
+
+// See all notifications
+export const seeAllNotifications = async (req, res, next) => {
+    var user_id = req.body.user_id
+
+    try{
+        var updated_Not = await Notification.updateMany({user: user_id, seen: false}, {seen: true})
+        if(updated_Not){
+            var user = await User.findOne({_id: user_id})
+            if(user) res.status(200).json(user)
+            else res.status(401).json({msg: 'Could not get the updated user'})
+        }else res.status(401).json({msg: 'Could not see all notifications'})
+    }catch(e) { res.status(500).json(e) }
+}
+
+// Delete all notifications
+export const deleteAllNotifications = async (req, res, next) => {
+    var user_id = req.body.user_id
+
+    try{
+        var user = await User.findOne({_id: user_id})
+        var deletedNoti = await Notification.deleteMany({user: user_id})
+
+        if(user && deletedNoti){
+            user.notifications = []
+            var saved_user = await user.save()
+            if(saved_user) res.status(200).json(saved_user)
+            else res.status(401).json({msg: 'Could not get the updated user'})
+        }else res.status(401).json({msg: 'Could not find the user or could not delete notification'})
+    }catch(e) { res.status(500).json(e) }
+}
+
+// Get the feed
+export const getTheFeed = async (req, res, next) => {
+
+    var user_id = req.body.user_id
+    try{    
+        var posts = await Post.find({})
+        var user = await User.findOne({_id: user_id})
+        if(user && posts){
+            var user_folls = user.followers.map(ele => JSON.stringify(ele))
+            var returned_posts = posts.filter(post => user_folls.includes(JSON.stringify(post.publisher)) === true)
+            res.status(200).json(returned_posts)
+        }else res.status(401).json({msg: 'Could not get post or user'})
     }catch(e) { res.status(500).json(e) }
 }
 
