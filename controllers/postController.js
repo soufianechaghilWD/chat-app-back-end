@@ -20,7 +20,7 @@ export const upload = multer({storage}).single('file')
 
 
 // Delete a file
-export const delete_Pic = (url) => {
+export function delete_Pic (url) {
     var file_path = path.join(__dirname, '/public', url)
     fs.unlink(file_path, (err) => {
         if(err) return err
@@ -29,7 +29,7 @@ export const delete_Pic = (url) => {
 }
 
 //Add a post 
-export const addPost =  (req, res, next) => {
+export function addPost (req, res, next) {
     upload(req, res, async (err) => {
         if(err instanceof multer.MulterError){
             res.status(401).json({msg: 'A multer error has occured'})
@@ -58,7 +58,7 @@ export const addPost =  (req, res, next) => {
 }
 
 // Like a post
-export const likePost = async (req, res, next) => {
+export async function likePost (req, res, next)  {
     var post_id = req.body.post_id
     var user_id = req.body.user_id
     
@@ -98,7 +98,7 @@ export const likePost = async (req, res, next) => {
 }
 
 // Dislike a post
-export const dislikePost = async (req, res, next) => {
+export async function dislikePost (req, res, next) {
     var post_id = req.body.post_id
     var user_id = req.body.user_id
     try{
@@ -123,7 +123,7 @@ export const dislikePost = async (req, res, next) => {
 }
 
 // Delete a post
-export const deletePost = async (req, res, next) => {
+export async function deletePost (req, res, next) {
     var post_id = req.body.post_id
     var user_id = req.body.user_id
 
@@ -157,7 +157,7 @@ export const deletePost = async (req, res, next) => {
 }
 
 // Comment on a post
-export const addComment = async (req, res, next) => {
+export async function  addComment (req, res, next) {
     var post_id = req.body.post_id
     var user_id = req.body.user_id
     var comment = req.body.comment
@@ -211,7 +211,7 @@ export const addComment = async (req, res, next) => {
 }
 
 // Delete a comment 
-export const deleteComment = async (req, res, next) => {
+export async function deleteComment (req, res, next) {
     var comment_id = req.body.comment_id
     var user_id = req.body.user_id
     var post_id = req.body.post_id

@@ -8,11 +8,11 @@ import Post from '../models/post.js'
 import Notification from '../models/notification.js'
 
 // Register a User 
-export const Register_User = async (req, res, next) => {
+export async function Register_User (req, res, next) {
     try{
         var crypted_password = await bcrypt.hash(req.body.password, 10)
     }catch(e){
-        res.status(500).json(e)
+        return res.status(501).json(e)
     }
     if(crypted_password){
         var new_user = new User({
@@ -31,42 +31,42 @@ export const Register_User = async (req, res, next) => {
             if(existed_user === null){
                 try{
                     var result = await new_user.save()
-                    if(result) res.status(200).json(result) 
-                    else res.status(500).json({msg: 'Could register the user'})
+                    if(result) return res.status(200).json(result) 
+                    else return res.status(401).json({msg: 'Could not register the user'})
                 }catch(e){
-                    res.status(500).json({msg: 'Could register the user'})
+                    return res.status(401).json({msg: 'Could not register the user'})
                 }
             }else{
-                res.status(201).json({msg: "Username Already exists"})
+                return res.status(401).json({msg: "Username Already exists"})
             }
         }catch (err) {
-            res.status(500).json(err)
+            return res.status(500).json(err)
         }
-    }else res.status(400).json({"err": "Could not crypt the pass"})
+    }else return res.status(401).json({"err": "Could not crypt the pass"})
 }
 
 // Login a User
-export const Login_User = async (req, res, next) => {
+export async function Login_User (req, res, next) {
     try{
         try{
             var user = await User.findOne({'username': req.body.username})
         }catch(e){
-            res.status(500).json(e)
+            return res.status(500).json(e)
         }
         if(user){
-            if(bcrypt.compare(req.body.password, user.password)){
+            if(await bcrypt.compare(req.body.password, user.password)){
                 // Assign JWT and send back to user
                 const token = jwt.sign({username: req.body.username}, "JwtSecret", {expiresIn: "7d"})
-                res.status(200).json(token)
-            }else res.status(202).json({msg: 'Wrong password and username combination'})
-        }else res.status(300).json({msg: "User doesn't exist"})
+                return res.status(200).json(token)
+            }else return res.status(202).json({msg: 'Wrong password'})
+        }else return res.status(300).json({msg: "User doesn't exist"})
     }catch(e){
-        res.status(400).json(e)
+        return res.status(400).json(e)
     }
 }
 
 // Verify the User
-export const Check_User = async (req, res, next) => {
+export async function Check_User (req, res, next) {
     var token = req.body.token
     try{
         try{
@@ -82,7 +82,7 @@ export const Check_User = async (req, res, next) => {
 }
 
 // Log the User out
-export const Logout_User = async (req, res, next) => {
+export async function Logout_User (req, res, next) {
     var token = req.body.token
     var new_Blacklist_jwt = new blacklist_JWT({
         'token': token
@@ -101,7 +101,7 @@ export const Logout_User = async (req, res, next) => {
 }
 
 // Follow a user
-export const followUser = async (req, res, next) => {
+export async function followUser (req, res, next) {
     var to_follow = req.body.to_follow
     var me = req.body.me
 
@@ -134,7 +134,7 @@ export const followUser = async (req, res, next) => {
 }
 
 // Unfollow a user
-export const unfollowUser = async (req, res, next) => {
+export async function unfollowUser (req, res, next) {
     var to_follow = req.body.to_follow
     var me = req.body.me
 
@@ -161,7 +161,7 @@ export const unfollowUser = async (req, res, next) => {
 }
 
 // Update the user
-export const updateUser = async (req, res, next) => {
+export async function updateUser (req, res, next) {
     
     var user_id = req.body.user_id
     if(user_id){
@@ -205,7 +205,7 @@ export const updateUser = async (req, res, next) => {
 }
 
 // Update the profile picture
-export const updateProfilePic = async (req, res, next) => {
+export async function updateProfilePic (req, res, next) {
 
     postController.upload(req, res, async(err) => {
         if(err instanceof multer.MulterError){
@@ -232,7 +232,7 @@ export const updateProfilePic = async (req, res, next) => {
 }
 
 // Add a post to registred posts
-export const registredPosts = async (req, res, next) => {
+export async function registredPosts (req, res, next) {
     try{
         var post = await Post.findOne({_id: req.body.post_id})
         var user = await User.findOne({_id: req.body.user_id})
@@ -248,7 +248,7 @@ export const registredPosts = async (req, res, next) => {
 }
 
 // Remove a post from registred posts
-export const removeRegistredPost = async (req, res, next) => {
+export async function removeRegistredPost (req, res, next) {
     try{
         var post = await Post.findOne({_id: req.body.post_id})
         var user = await User.findOne({_id: req.body.user_id})
@@ -269,7 +269,7 @@ export const removeRegistredPost = async (req, res, next) => {
 }
 
 // See a notification
-export const seeNotification = async (req, res, next) => {
+export async function seeNotification (req, res, next) {
     var noti_id = req.body.noti_id
     var user_id = req.body.user_id
 
@@ -290,7 +290,7 @@ export const seeNotification = async (req, res, next) => {
 }
 
 // See all notifications
-export const seeAllNotifications = async (req, res, next) => {
+export async function seeAllNotifications (req, res, next) {
     var user_id = req.body.user_id
 
     try{
@@ -304,7 +304,7 @@ export const seeAllNotifications = async (req, res, next) => {
 }
 
 // Delete all notifications
-export const deleteAllNotifications = async (req, res, next) => {
+export async function deleteAllNotifications (req, res, next) {
     var user_id = req.body.user_id
 
     try{
@@ -321,7 +321,7 @@ export const deleteAllNotifications = async (req, res, next) => {
 }
 
 // Get the feed
-export const getTheFeed = async (req, res, next) => {
+export async function getTheFeed (req, res, next) {
 
     var user_id = req.body.user_id
     try{    
