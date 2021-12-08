@@ -335,6 +335,17 @@ export async function getTheFeed (req, res, next) {
     }catch(e) { res.status(500).json(e) }
 }
 
+// Delete a user
+export async function deleteUser (req, res, next) {
+    var user_id = req.body.user_id
+
+    try{
+        var deleteEle = await User.deleteOne({_id: user_id})
+        if(deleteEle) res.status(200).json({msg: 'User deleted'})
+        else res.status(401).json({msg: "Could not delete the user"})
+    }catch(e) { res.status(500).json(e) }
+}
+
 // Verify the Token
 export const verifyJWT = (req, res, next) => {
     const token = req.body.token || req.params.token ||req.headers['x-access-token']

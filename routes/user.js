@@ -55,4 +55,7 @@ Router.delete('/deleteNotis', UserController.deleteAllNotifications)
 // Router.post('/getTheFeed', UserController.verifyJWT, UserController.getTheFeed)
 Router.post('/getTheFeed', UserController.getTheFeed)
 
+// Delete a user
+Router.delete('/deleteUser', UserController.verifyJWT, UserController.deleteUser)
+
 export default Router

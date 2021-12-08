@@ -48,3 +48,16 @@ export async function loginUser (user_info) {
     expect(response.status).toBe(200)
     return response.body
 }
+
+// Check if the user is logged in
+export async function checkUserLogIn (token) {
+    var response = await request(app).post('/checkuser').send({"token": token})
+    expect(response.status).toBe(200)
+    expect(response.body.msg).toBe('You are logged in')
+}
+
+export async function deleteUser (user_id, token) {
+    var response = await request(app).delete('/deleteUser').send({user_id: user_id, token: token})
+    expect(response.status).toBe(200)
+    expect(response.body.msg).toBe('User deleted')
+}
