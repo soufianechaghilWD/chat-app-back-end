@@ -5,6 +5,7 @@ import blacklist_JWT from '../models/blacklist_JWT.js'
 import * as postController from './postController.js'
 import multer from 'multer'
 import Post from '../models/post.js'
+import Comment from '../models/comment.js'
 import Notification from '../models/notification.js'
 
 // Register a User 
@@ -340,6 +341,13 @@ export async function deleteUser (req, res, next) {
     var user_id = req.body.user_id
 
     try{
+        var user = await User.findOne({_id: user_id})
+        if(user.profile_pic !== 'default_url_pic.png'){
+            postController.delete_Pic(user.profile_pic)
+        }
+        var deletedPosts = await Post.deleteMany({publisher: user_id})
+        var deletedComments = await Comment.deleteMany({publisher: user_id})
+        var deletedNotis = await Notification.deleteMany({user: user._id})
         var deleteEle = await User.deleteOne({_id: user_id})
         if(deleteEle) res.status(200).json({msg: 'User deleted'})
         else res.status(401).json({msg: "Could not delete the user"})

@@ -48,9 +48,17 @@ export async function deletePost(post, deleter, token){
 }
 
 // Delete all notifications
-export async function deleteNotifications(user){
+export async function deleteNotifications(user, token){
     var response = await request(app).delete('/deleteNotis').send({
-        user_id: user
+        user_id: user,
+        token: token
     })
     expect(response.status).toBe(200)
+}
+
+// Get the feed
+export async function getTheFeed (user, token) {
+    var response = await request(app).post('/getTheFeed').send({user_id: user, token: token})
+    expect(response.status).toBe(200)
+    expect(response.body.length).toBe(1)
 }

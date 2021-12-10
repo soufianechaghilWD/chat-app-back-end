@@ -16,7 +16,7 @@ export async function registerTest (user_info) {
     }))
     expect(typeof(response.body.password)).toBe('string')
     expect(response.status).toBe(200)
-    return response.body._id
+    return response.body
 }
 
 // Return can not create new user because it already exists
@@ -56,8 +56,41 @@ export async function checkUserLogIn (token) {
     expect(response.body.msg).toBe('You are logged in')
 }
 
+// Delete a user
 export async function deleteUser (user_id, token) {
     var response = await request(app).delete('/deleteUser').send({user_id: user_id, token: token})
     expect(response.status).toBe(200)
     expect(response.body.msg).toBe('User deleted')
+}
+
+// Follow a user
+export async function followUser (me, to_follow, token) {
+    var response = await request(app).post('/followuser').send({
+        to_follow: to_follow,
+        me: me,
+        token: token
+    })
+    expect(response.status).toBe(200)
+    return response.body
+}
+
+// See all the notifications
+export async function seeNotis (user, token) {
+    var response = await request(app).put('/seeAllNoti').send({user_id: user, token: token})
+    expect(response.status).toBe(200)
+}
+
+// Update the user's bio
+export async function updateUser(user, token) {
+    var response = await request(app).put('/updateuser').send({user_id: user, bio: 'Updated bio u guys', token: token})
+    expect(response.status).toBe(200)
+    return response.body
+}
+
+// Update the user's profile picture
+export async function updateProfilePic(user, token) {
+    var response = await request(app).put('/updateProfilePic').attach('file', __dirname+'/a.jpg').field('user_id', user).set('x-access-token', token)
+    // console.log(response.body)
+    expect(response.status).toBe(200)
+    return response.body
 }
