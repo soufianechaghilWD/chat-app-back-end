@@ -20,7 +20,7 @@ export async function Register_User (req, res, next) {
             username: req.body.username,
             email: req.body.email,
             password: crypted_password,
-            bio: req.body.bio,
+            bio: "Initiliazed bio (by default)",
             posts: [],
             registedPosts: [],
             followers: [],
